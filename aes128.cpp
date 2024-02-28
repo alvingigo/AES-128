@@ -225,32 +225,27 @@ void invMixColumns(uint8_t *state){
 
 void aes_encrypt(uint8_t * plainText,uint8_t * cipherText,uint8_t * userKey){
     uint8_t roundKeys[176];
+    //perform KeyExpansion
 
     keyExpansion(userKey,roundKeys);
-    printf("keyExpansion\n");
-    printHex(roundKeys,176);
-    memcpy(cipherText, plainText, BLOCK_SIZE);
-    addRoundKey(cipherText,roundKeys);
-    printf("\nRound1\n\n");
-    printHex(cipherText,BLOCK_SIZE);
     
-    for(int i=1;i<ROUNDS;i++){
+    memcpy(cipherText, plainText, BLOCK_SIZE);
+    addRoundKey(cipherText,roundKeys); //Initial Round
+
+    
+    for(int i=1;i<ROUNDS;i++){// Nine Rounds
         subBytes(cipherText);
        
         shiftRows(cipherText);
         
-        printHex(cipherText,BLOCK_SIZE);
         mixColumns(cipherText);
-        printf("%dmix :: \n\n",i);
-        printHex(cipherText,BLOCK_SIZE);
+
         addRoundKey(cipherText,roundKeys+i*BLOCK_SIZE);
-        printf("%dadd :: \n\n",i);
-        printHex(cipherText,BLOCK_SIZE);
         
     }
 
     subBytes(cipherText);
-    shiftRows(cipherText);
+    shiftRows(cipherText);  //Final Round
     addRoundKey(cipherText,roundKeys+ROUNDS*BLOCK_SIZE);
 
 }   
@@ -259,6 +254,7 @@ void aes_decrypt(uint8_t * cipher,uint8_t * key,uint8_t * plain){
    
     
     uint8_t roundKeys[176];
+    //Key Expansion
     keyExpansion(key,roundKeys);
 
 
@@ -266,16 +262,18 @@ void aes_decrypt(uint8_t * cipher,uint8_t * key,uint8_t * plain){
     
     addRoundKey(cipher,roundKeys+BLOCK_SIZE*(ROUNDS));
 
-    for(int i=ROUNDS-1;i>0;i--){
-          invSubBytes(cipher);
+    for(int i=ROUNDS-1;i>0;i--){// Nine Rounds
+        invSubBytes(cipher);
+        
         invShiftRows(cipher);
       
         addRoundKey(cipher,roundKeys+BLOCK_SIZE*(i));
+        
         invMixColumns(cipher);
        
     }
     invShiftRows(cipher);
-    invSubBytes(cipher);
+    invSubBytes(cipher);// Final Round
     addRoundKey(cipher,roundKeys);
 
      memcpy(plain,cipher,BLOCK_SIZE);
